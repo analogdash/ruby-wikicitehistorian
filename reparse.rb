@@ -59,10 +59,10 @@ ArticleRevision.find_each do |r|
           refstring.comments = ""
           tag.children.each do |n|
             if n.comment?
-              unless refstring.comment == ""
-                refstring.comment += ","
+              unless refstring.comments == ""
+                refstring.comments += ","
               end
-              refstring.comment += n.content
+              refstring.comments += n.content
             end
           end
         end
