@@ -1,6 +1,6 @@
 #code to update Revisions and parse them too.
 $t1 = Time.now
-Article.for_each do |article|
+Article.find_each do |article|
   uri = URI(
     "https://en.wikipedia.org/w/api.php?" +
     "action=query" + "&" +
