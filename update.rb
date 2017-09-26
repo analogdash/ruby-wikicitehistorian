@@ -1,51 +1,4 @@
 #code to update Revisions and parse them too.
-$t1 = Time.now
-Article.find_each do |article|
-  uri = URI(
-    "https://en.wikipedia.org/w/api.php?" +
-    "action=query" + "&" +
-    "format=json" + "&" +
-    "prop=revisions" + "&" +
-    "rvlimit=50" + "&" +
-    "rvprop=ids|timestamp|user|userid|comment|tags|size|content" + "&" +
-    "pageids=#{article.pageid.to_s}")
-  breakme = false
-  wikiapidata = Net::HTTP.get_response(uri)
-  wikijsondata = JSON.parse(wikiapidata.body)
-  wikijsondata["query"]["pages"][article.pageid.to_s]["revisions"].each do |revision|
-    if Revision.where(revid: revision["revid"]).exists? == false
-      save_revision_info(article,revision)
-    else
-      breakme = true
-      break
-    end
-  end
-
-  if breakme == false
-    while ! wikijsondata.keys.include?("batchcomplete") do
-      conti = wikijsondata["continue"]["continue"]
-      rvconti = wikijsondata["continue"]["rvcontinue"]
-      uri2 = uri + "&continue=" + conti + "&rvcontinue=" + rvconti
-      wikiapidata = Net::HTTP.get_response(uri2)
-      wikijsondata = JSON.parse(wikiapidata.body)
-      wikijsondata["query"]["pages"][article.pageid.to_s]["revisions"].each do |revision|
-        if Revision.where(revid: revision["revid"]).exists? == false
-          save_revision_info(article,revision)
-        else
-          breakme = true
-          break
-        end
-      end
-      if breakme == true
-        break 
-      end
-    end
-  else
-    next
-  end
-end
-$t2 = Time.now
-
 def save_revision_info (article,revision)
   rev = Revision.new
   rev.pageid = article.pageid
@@ -121,3 +74,50 @@ def save_revision_info (article,revision)
   rev.instances_count = rev.instances_normal_count + rev.instances_broken_count
   rev.save
 end
+
+$t1 = Time.now
+Article.find_each do |article|
+  uri = URI(
+    "https://en.wikipedia.org/w/api.php?" +
+    "action=query" + "&" +
+    "format=json" + "&" +
+    "prop=revisions" + "&" +
+    "rvlimit=50" + "&" +
+    "rvprop=ids|timestamp|user|userid|comment|tags|size|content" + "&" +
+    "pageids=#{article.pageid.to_s}")
+  breakme = false
+  wikiapidata = Net::HTTP.get_response(uri)
+  wikijsondata = JSON.parse(wikiapidata.body)
+  wikijsondata["query"]["pages"][article.pageid.to_s]["revisions"].each do |revision|
+    if Revision.where(revid: revision["revid"]).exists? == false
+      save_revision_info(article,revision)
+    else
+      breakme = true
+      break
+    end
+  end
+
+  if breakme == false
+    while ! wikijsondata.keys.include?("batchcomplete") do
+      conti = wikijsondata["continue"]["continue"]
+      rvconti = wikijsondata["continue"]["rvcontinue"]
+      uri2 = uri + "&continue=" + conti + "&rvcontinue=" + rvconti
+      wikiapidata = Net::HTTP.get_response(uri2)
+      wikijsondata = JSON.parse(wikiapidata.body)
+      wikijsondata["query"]["pages"][article.pageid.to_s]["revisions"].each do |revision|
+        if Revision.where(revid: revision["revid"]).exists? == false
+          save_revision_info(article,revision)
+        else
+          breakme = true
+          break
+        end
+      end
+      if breakme == true
+        break 
+      end
+    end
+  else
+    next
+  end
+end
+$t2 = Time.now
