@@ -77,14 +77,15 @@ end
 
 $t1 = Time.now
 Article.find_each do |article|
-  uri = URI(
+  uristring =
     "https://en.wikipedia.org/w/api.php?" +
     "action=query" + "&" +
     "format=json" + "&" +
     "prop=revisions" + "&" +
     "rvlimit=50" + "&" +
     "rvprop=ids|timestamp|user|userid|comment|tags|size|content" + "&" +
-    "pageids=#{article.pageid.to_s}")
+    "pageids=#{article.pageid.to_s}"
+  uri = URI(uristring)
   breakme = false
   wikiapidata = Net::HTTP.get_response(uri)
   wikijsondata = JSON.parse(wikiapidata.body)
@@ -101,8 +102,9 @@ Article.find_each do |article|
     while ! wikijsondata.keys.include?("batchcomplete") do
       conti = wikijsondata["continue"]["continue"]
       rvconti = wikijsondata["continue"]["rvcontinue"]
-      uri2 = uri + "&continue=" + conti + "&rvcontinue=" + rvconti
-      wikiapidata = Net::HTTP.get_response(uri2)
+      uristring2 = uristring + "&continue=" + conti + "&rvcontinue=" + rvconti
+      uri = URI(uristring2)
+      wikiapidata = Net::HTTP.get_response(uri)
       wikijsondata = JSON.parse(wikiapidata.body)
       wikijsondata["query"]["pages"][article.pageid.to_s]["revisions"].each do |revision|
         if Revision.where(revid: revision["revid"]).exists? == false
