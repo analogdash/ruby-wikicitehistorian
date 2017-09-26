@@ -61,7 +61,7 @@ def save_revision_info (article,revision)
   mwtext = revision["*"]
   refindex = 0
   refendex = 0
-  position = 0
+  position = 1
   while true do
     refindex = mwtext.index("<ref", refendex)
     if refindex == nil
