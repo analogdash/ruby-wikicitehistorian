@@ -9,18 +9,15 @@ Article.for_each do |article|
     "rvlimit=50" + "&" +
     "rvprop=ids|timestamp|user|userid|comment|tags|size|content" + "&" +
     "pageids=#{article.pageid.to_s}")
+  breakme = false
   wikiapidata = Net::HTTP.get_response(uri)
   wikijsondata = JSON.parse(wikiapidata.body)
-  breakme = false
-
   wikijsondata["query"]["pages"][article.pageid.to_s]["revisions"].each do |revision|
     if Revision.where(revid: revision["revid"]).exists? == false
       save_revision_info(article,revision)
     else
-      puts "IT'S BREAK TIME!!"
       breakme = true
       break
-      puts "WILL THIS GET PRINTED?"
     end
   end
 
@@ -31,11 +28,16 @@ Article.for_each do |article|
       uri2 = uri + "&continue=" + conti + "&rvcontinue=" + rvconti
       wikiapidata = Net::HTTP.get_response(uri2)
       wikijsondata = JSON.parse(wikiapidata.body)
-      if Revision.where(revid: revision["revid"]).exists? == false
-        save_revision_info(article,revision)
-      else
-        breakme = true
-        break
+      wikijsondata["query"]["pages"][article.pageid.to_s]["revisions"].each do |revision|
+        if Revision.where(revid: revision["revid"]).exists? == false
+          save_revision_info(article,revision)
+        else
+          breakme = true
+          break
+        end
+      end
+      if breakme == true
+        break 
       end
     end
   else
