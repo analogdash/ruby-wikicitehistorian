@@ -1,0 +1,28 @@
+<div class="articles index">
+  <h2>Subjects</h2>
+
+  <%= link_to("Add New Article", {action: 'new'}, :class => 'action new') %>
+
+  <br><br>
+<% if !flash[:notice].blank? %>
+  <div class="notice">
+    <%= flash[:notice] %>
+  </div>
+<% end %>
+  <table class="listing" summary="Subject list">
+    <tr class="header">
+      <th>Title</th>
+      <th>id</th>
+      <th>actions</th>
+    </tr>
+    <% @articles.each do |a| %>
+    <tr>
+      <td><%= a.title %></td>
+      <td><%= a.pageid.to_s %></td>
+      <td class="actions">
+        <%= link_to("Show", {action: 'show', id: a.id}, :class => 'action show') %>
+      </td>
+    </tr>
+    <% end %>
+  </table>
+</div>

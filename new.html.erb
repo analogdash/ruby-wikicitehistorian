@@ -1,0 +1,26 @@
+<h1>Article#new</h1>
+
+<%= link_to("<< Back to List", {:action => 'index'}, :class => 'back-link') %>
+<% if !flash[:notice].blank? %>
+  <div class="notice">
+    <%= flash[:notice] %>
+  </div>
+<% end %>
+<div class="article new">
+  <h2>Create Article</h2>
+
+  <%= form_for(:article, :url => {:action => 'create'}) do |f| %>
+
+    <table summary="Subject form fields">
+      <tr>
+        <th>Name</th>
+        <td><%= f.text_field(:title) %></td>
+      </tr>
+    </table>
+
+    <div class="form-buttons">
+      <%= submit_tag("Add Article") %>
+    </div>
+
+  <% end %>
+</div>
