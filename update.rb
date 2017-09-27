@@ -13,63 +13,65 @@ def save_revision_info (article,revision)
   rev.instances_broken_count = 0
   rev.timestamp = DateTime.parse(revision["timestamp"])
 
-  mwtext = revision["*"]
-  refindex = 0
-  refendex = 0
-  position = 1
-  while true do
-    refindex = mwtext.index("<ref", refendex)
-    if refindex == nil
-      break
-    end
-    nextbrack = mwtext.index(/<[^!]/, refindex + 1)
-    nextbrack = !nextbrack ? -1 : nextbrack #Convert nils to -1
-    slashref = mwtext.index("/>", refindex)
-    slashref = !slashref ? -1 : slashref
-    refendex = mwtext.index("</ref>",refindex)
-    refendex = !refendex ? -1 : refendex
-    
-    if ((nextbrack < slashref) || (slashref == -1)) && (nextbrack != -1)
-      if nextbrack == refendex
-        reftype = 'normal'
-        refendex += 6
-        rev.instances_normal_count += 1
-      else
-        reftype = 'broken'
-        refendex = nextbrack
-        rev.instances_broken_count += 1
+  unless revision["*"] == nil
+    mwtext = revision["*"]
+    refindex = 0
+    refendex = 0
+    position = 1
+    while true do
+      refindex = mwtext.index("<ref", refendex)
+      if refindex == nil
+        break
       end
-    elsif ((slashref < nextbrack) || (nextbrack == -1)) && ((slashref < refendex) || (refendex == -1)) && (slashref != -1)
-      #NOTE THAT THIS is also triggered by <references/> make sure to catch it.
-      reftype = 'short'
-      refendex = slashref + 2
-      next #we're skipping short references for now
-    end
+      nextbrack = mwtext.index(/<[^!]/, refindex + 1)
+      nextbrack = !nextbrack ? -1 : nextbrack #Convert nils to -1
+      slashref = mwtext.index("/>", refindex)
+      slashref = !slashref ? -1 : slashref
+      refendex = mwtext.index("</ref>",refindex)
+      refendex = !refendex ? -1 : refendex
 
-    refstring = ReferenceInstance.new
-    refstring.revid = rev.revid
-    refstring.reftype = reftype
-    refstring.wikitext = mwtext[refindex,refendex-refindex]
-    refstring.size = refendex-refindex
-    refstring.position = position
+      if ((nextbrack < slashref) || (slashref == -1)) && (nextbrack != -1)
+        if nextbrack == refendex
+          reftype = 'normal'
+          refendex += 6
+          rev.instances_normal_count += 1
+        else
+          reftype = 'broken'
+          refendex = nextbrack
+          rev.instances_broken_count += 1
+        end
+      elsif ((slashref < nextbrack) || (nextbrack == -1)) && ((slashref < refendex) || (refendex == -1)) && (slashref != -1)
+        #NOTE THAT THIS is also triggered by <references/> make sure to catch it.
+        reftype = 'short'
+        refendex = slashref + 2
+        next #we're skipping short references for now
+      end
 
-    doc = Nokogiri::HTML(refstring.wikitext)
-    tag = doc.css("ref")[0]
-    unless tag == nil
-      refstring.refname = tag["name"]
-      refstring.content = tag.content
-      refstring.comments = ""
-      tag.children.each do |n|
-        if n.comment?
-          unless refstring.comments == ""
-            refstring.comments += ","
+      refstring = ReferenceInstance.new
+      refstring.revid = rev.revid
+      refstring.reftype = reftype
+      refstring.wikitext = mwtext[refindex,refendex-refindex]
+      refstring.size = refendex-refindex
+      refstring.position = position
+
+      doc = Nokogiri::HTML(refstring.wikitext)
+      tag = doc.css("ref")[0]
+      unless tag == nil
+        refstring.refname = tag["name"]
+        refstring.content = tag.content
+        refstring.comments = ""
+        tag.children.each do |n|
+          if n.comment?
+            unless refstring.comments == ""
+              refstring.comments += ","
+            end
+            refstring.comments += n.content
           end
-          refstring.comments += n.content
         end
       end
+      position += 1
+      refstring.save
     end
-    position += 1
-    refstring.save
   end
   rev.instances_count = rev.instances_normal_count + rev.instances_broken_count
   rev.save
