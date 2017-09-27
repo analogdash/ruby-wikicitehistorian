@@ -1,0 +1,41 @@
+class ArticlesController < ApplicationController
+  def index
+    @articles = Article.all
+  end
+
+  def show
+    @article = Article.find(params[:id])
+  end
+
+  def new
+    @article = Article.new
+  end
+
+  def create
+    title = params[:article][:title]
+    page = Wikipedia.find(title)
+    
+    if page.page['pageid'] == nil
+      flash[:notice] = "#{title} does not exist."
+      redirect_to(action: 'new')
+    else
+      if Article.where(pageid: page.page['pageid']).exists?
+        flash[:notice] = "#{title} already exists."
+        redirect_to(action: 'new')
+      else
+        @article = Article.new
+        @article.pageid = page.page['pageid']
+        @article.title = page.title
+        @article.fullurl = page.fullurl
+        @article.lastrevid = page.page['lastrevid']
+        if @article.save
+          flash[:notice] = "#{title} created successfully."
+          redirect_to(action: 'index')
+        else
+          flash[:notice] = "SQL Error for some reason"
+          redirect_to(action: 'new')
+        end
+      end
+    end
+  end
+end
