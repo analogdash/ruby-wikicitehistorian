@@ -15,7 +15,7 @@ end
 
 $t1 = Time.now
 
-while true
+begin
   ReferenceInstance.where(revid: @nextrev.revid).find_each do |instance|
     foundflag = false
     ReferenceUsage.where(pageid: @article.pageid).where.not(lastseen: @nextrev.revid).find_each do |usage|
