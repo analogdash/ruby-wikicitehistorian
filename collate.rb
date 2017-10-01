@@ -25,7 +25,7 @@ begin
         end
         instance.update_attributes(prevposition: usage.currentposition,
                                    prevrevid: usage.lastseen)
-        usage.update_attrubutes(wikitext: instance.wikitext,
+        usage.update_attributes(wikitext: instance.wikitext,
                                 refname: instance.refname,
                                 content: instance.content,
                                 comments: instance.comments,
